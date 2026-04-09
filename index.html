@@ -241,6 +241,7 @@ header{background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:10
     <button class="nav-t" onclick="tab('gen')">✍️ Book Generator</button>
     <button class="nav-t" onclick="tab('tree')">🌳 Family Tree</button>
     <button class="nav-t" onclick="tab('asm')">📚 Assembly</button>
+    <button class="nav-t" onclick="tab('web')">🌐 Website</button>
   </nav>
   <div class="hdr-r">
     <div id="apB" class="badge off">No API Key</div>
@@ -338,7 +339,10 @@ header{background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:10
   <p class="sub">Auto-generates a visual family tree from your GEDCOM data. Export to Canva or download as image.</p>
   <div class="tree-controls">
     <select id="treeProject" onchange="loadTreeProject()"><option value="">Select a project...</option></select>
-    <select id="treeRoot"><option value="">Select root person...</option></select>
+    <div style="position:relative;flex:1;min-width:200px">
+      <input type="text" id="treeRootSearch" class="si" placeholder="Search for root person..." oninput="filterTreeRoot()" style="width:100%;margin:0">
+      <select id="treeRoot" style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:13px"><option value="">Select root person...</option></select>
+    </div>
     <select id="treeGens"><option value="3">3 Generations</option><option value="4" selected>4 Generations</option><option value="5">5 Generations</option></select>
     <button class="bg p" onclick="renderTree()">🌳 Generate Tree</button>
   </div>
@@ -364,6 +368,40 @@ header{background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:10
     <button class="bx txt" onclick="exTxt()">📄 Export .txt</button>
     <button class="bx json" onclick="savProj()">💾 Save Project</button>
   </div>
+</div>
+</div>
+
+<!-- ═══ WEBSITE BUILDER TAB ═══ -->
+<div id="p-web" class="panel">
+<div style="max-width:900px;margin:0 auto;padding:32px">
+  <h2 style="font-family:var(--fd);font-size:26px;font-weight:700;margin-bottom:8px">🌐 Family Heritage Website</h2>
+  <p style="font-size:14px;color:var(--text-l);margin-bottom:24px">Auto-generate a complete heritage website from your project data. Download as HTML or deploy to GitHub Pages.</p>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
+    <div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-l);margin-bottom:4px">Family Name / Site Title</label>
+    <input type="text" id="webTitle" placeholder="The Williams Family Heritage" style="width:100%;padding:10px 14px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:14px"></div>
+    <div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-l);margin-bottom:4px">Subtitle</label>
+    <input type="text" id="webSub" placeholder="Six generations of faith, resilience, and community" style="width:100%;padding:10px 14px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:14px"></div>
+    <div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-l);margin-bottom:4px">Color Theme</label>
+    <div style="display:flex;gap:8px" id="themePk">
+      <div onclick="pickTheme(this)" data-theme="classic" style="width:50px;height:36px;border-radius:8px;border:2px solid var(--gold);cursor:pointer;background:linear-gradient(135deg,#faf8f4,#e8e2d6)" class="active"></div>
+      <div onclick="pickTheme(this)" data-theme="modern" style="width:50px;height:36px;border-radius:8px;border:2px solid var(--bdr);cursor:pointer;background:linear-gradient(135deg,#1a1a2e,#16213e)"></div>
+      <div onclick="pickTheme(this)" data-theme="heritage" style="width:50px;height:36px;border-radius:8px;border:2px solid var(--bdr);cursor:pointer;background:linear-gradient(135deg,#2c1810,#5a3825)"></div>
+      <div onclick="pickTheme(this)" data-theme="garden" style="width:50px;height:36px;border-radius:8px;border:2px solid var(--bdr);cursor:pointer;background:linear-gradient(135deg,#edf2eb,#4a6741)"></div>
+    </div></div>
+    <div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-l);margin-bottom:4px">Sections</label>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px">
+      <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="wHome" checked> Homepage</label>
+      <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="wTree" checked> Family Tree</label>
+      <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="wTL" checked> Timeline</label>
+      <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="wBio" checked> Biographies</label>
+      <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="wGal"> Photo Gallery</label>
+    </div></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="bg p" onclick="genWeb()">🌐 Generate Website</button>
+    <button class="bg s" id="dlWebBtn" onclick="dlWeb()" style="display:none">📥 Download HTML</button>
+  </div>
+  <div id="webPrev" style="display:none;margin-top:20px;border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh-l)"></div>
 </div>
 </div>
 
@@ -399,7 +437,7 @@ function tab(id){
   document.querySelectorAll('.nav-t').forEach(t=>t.classList.remove('on'));
   document.getElementById('p-'+id).classList.add('on');
   document.querySelectorAll('.nav-t').forEach(t=>{
-    const map={projects:'Projects',gen:'Book Gen',tree:'Family Tree',asm:'Assembly'};
+    const map={projects:'Projects',gen:'Book Gen',tree:'Family Tree',asm:'Assembly',web:'Website'};
     if(t.textContent.includes(map[id]||'')) t.classList.add('on');
   });
   if(id==='asm') refAsm();
@@ -517,15 +555,20 @@ function saveProjects(){localStorage.setItem('ls_projects',JSON.stringify(projec
 function renderProjects(){
   const grid=document.getElementById('projGrid');
   grid.innerHTML=projects.map((p,i)=>`
-    <div class="proj-card ${activeProj===i?'active':''}" onclick="openProject(${i})">
+    <div class="proj-card ${activeProj===i?'active':''}">
       <div class="pc-badge ${p.type==='gedcom'?'ged':'notes'}">${p.type==='gedcom'?'GEDCOM':'Notes'}</div>
-      <div class="pc-icon">${p.type==='gedcom'?'📁':'📝'}</div>
-      <div class="pc-name">${esc(p.name)}</div>
+      <div class="pc-icon" onclick="openProject(${i})" style="cursor:pointer">${p.type==='gedcom'?'📁':'📝'}</div>
+      <div class="pc-name" onclick="openProject(${i})" style="cursor:pointer">${esc(p.name)}</div>
       <div class="pc-meta">${p.fileName||'Manual entry'} · ${new Date(p.created).toLocaleDateString()}</div>
       <div class="pc-stats">
         <span>👥 ${p.peopleCount||0} people</span>
         <span>📄 ${p.chaptersCount||0} chapters</span>
         <span>📋 ${p.sourcesCount||0} sources</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="event.stopPropagation();renameProject(${i})" style="font-size:10px;padding:3px 10px;border:1px solid var(--bdr);background:var(--white);border-radius:5px;cursor:pointer;font-family:var(--fb)">✏️ Rename</button>
+        <button onclick="event.stopPropagation();deleteProject(${i})" style="font-size:10px;padding:3px 10px;border:1px solid var(--bdr);background:var(--white);border-radius:5px;cursor:pointer;font-family:var(--fb);color:var(--rust)">🗑 Delete</button>
+        <button onclick="event.stopPropagation();openProject(${i});openProjectInGen()" style="font-size:10px;padding:3px 10px;border:1px solid var(--gold);background:var(--gold-bg);border-radius:5px;cursor:pointer;font-family:var(--fb);color:var(--gold)">✍️ Open</button>
       </div>
     </div>
   `).join('')+`
@@ -562,6 +605,25 @@ function openProject(idx){
 }
 
 function closeProjDetail(){document.getElementById('projDetail').classList.remove('show');}
+
+function renameProject(idx){
+  const newName=prompt('Rename project:',projects[idx].name);
+  if(newName&&newName.trim()){projects[idx].name=newName.trim();saveProjects();renderProjects();toast('Renamed!');}
+}
+
+function deleteProject(idx){
+  if(confirm('Delete "'+projects[idx].name+'"? This cannot be undone.')){
+    projects.splice(idx,1);
+    if(activeProj===idx) activeProj=null;
+    else if(activeProj>idx) activeProj--;
+    saveProjects();renderProjects();toast('Deleted');
+  }
+}
+
+function openPersonInGen(id){
+  openProjectInGen();
+  setTimeout(()=>selPerson(id),150);
+}
 
 function openProjectInGen(){
   if(activeProj===null) return;
@@ -607,7 +669,7 @@ function buildFolderTree(){
       </div>
       <ul class="ft-children">
         ${group.map(p=>`<li>
-          <div class="ft-row" onclick="selectPersonFromTree('${p.id}')">
+          <div class="ft-row" onclick="openPersonInGen('${p.id}')">
             <span class="ft-icon">${p.sex==='M'?'👨':p.sex==='F'?'👩':'👤'}</span>
             <span>${esc(p.name)}</span>
             <span style="font-size:10px;color:var(--text-l);margin-left:auto">${p.birth?.date||''}</span>
@@ -888,8 +950,18 @@ function loadTreeProject(){
   const idx=+document.getElementById('treeProject').value;
   if(isNaN(idx)) return;
   openProject(idx);
+  const sorted=[...people].sort((a,b)=>(a.sur||'').localeCompare(b.sur||'')||(a.giv||'').localeCompare(b.giv||''));
   const sel=document.getElementById('treeRoot');
-  sel.innerHTML='<option value="">Select root person...</option>'+people.map(p=>`<option value="${p.id}">${esc(p.name)} ${p.birth?.date?'('+p.birth.date+')':''}</option>`).join('');
+  sel.innerHTML='<option value="">Select root person...</option>'+sorted.map(p=>`<option value="${p.id}">${esc(p.sur||'')}${p.sur&&p.giv?', ':''}${esc(p.giv||'')} ${p.birth?.date?'('+p.birth.date+')':''}</option>`).join('');
+  document.getElementById('treeRootSearch').value='';
+}
+
+function filterTreeRoot(){
+  const q=document.getElementById('treeRootSearch').value.toLowerCase();
+  const sel=document.getElementById('treeRoot');
+  const sorted=[...people].sort((a,b)=>(a.sur||'').localeCompare(b.sur||'')||(a.giv||'').localeCompare(b.giv||''));
+  const filtered=q?sorted.filter(p=>p.name.toLowerCase().includes(q)):sorted;
+  sel.innerHTML='<option value="">'+filtered.length+' matches...</option>'+filtered.map(p=>`<option value="${p.id}">${esc(p.sur||'')}${p.sur&&p.giv?', ':''}${esc(p.giv||'')} ${p.birth?.date?'('+p.birth.date+')':''}</option>`).join('');
 }
 
 function renderTree(){
@@ -1023,6 +1095,52 @@ function openSet(){document.getElementById('setMo').classList.add('open');docume
 function closeSet(){document.getElementById('setMo').classList.remove('open');}
 function savSet(){const k=document.getElementById('inKey').value.trim(),b=document.getElementById('inBiz').value.trim(),i=document.getElementById('inIns').value.trim();if(k)localStorage.setItem('ls_api',k);if(b)localStorage.setItem('ls_biz',b);if(i)localStorage.setItem('ls_ins',i);updBadge();closeSet();toast('Saved!');}
 function updBadge(){const el=document.getElementById('apB');if(localStorage.getItem('ls_api')){el.className='badge on';el.textContent='API Connected';}else{el.className='badge off';el.textContent='No API Key';}}
+
+// ═══════════════════════════════════════
+// WEBSITE BUILDER
+// ═══════════════════════════════════════
+let webTheme='classic',genWebHTML='';
+function pickTheme(el){document.querySelectorAll('#themePk > div').forEach(d=>{d.style.borderColor='var(--bdr)';});el.style.borderColor='var(--gold)';webTheme=el.dataset.theme;}
+
+function genWeb(){
+  const title=document.getElementById('webTitle').value||'Family Heritage';
+  const sub=document.getElementById('webSub').value||'';
+  const sec={home:document.getElementById('wHome').checked,tree:document.getElementById('wTree').checked,tl:document.getElementById('wTL').checked,bio:document.getElementById('wBio').checked,gal:document.getElementById('wGal').checked};
+  const themes={classic:{bg:'#faf9f6',txt:'#1c1917',acc:'#9e7c0c',card:'#f0ece4',nav:'#1c1917'},modern:{bg:'#0f172a',txt:'#e2e8f0',acc:'#60a5fa',card:'#1e293b',nav:'#1e293b'},heritage:{bg:'#1c1210',txt:'#e8ddd0',acc:'#c9a227',card:'#2c1810',nav:'#2c1810'},garden:{bg:'#f0f5ee',txt:'#1c1917',acc:'#4a6741',card:'#e2ebe0',nav:'#2d4228'}};
+  const t=themes[webTheme]||themes.classic;
+  const sorted=[...people].sort((a,b)=>(a.birth?.date||'9999').localeCompare(b.birth?.date||'9999'));
+  const events=[];
+  sorted.filter(p=>p.birth?.date).forEach(p=>events.push({d:p.birth.date,n:p.name,e:'Born'+(p.birth.place?' in '+p.birth.place:'')}));
+  sorted.filter(p=>p.death?.date).forEach(p=>events.push({d:p.death.date,n:p.name,e:'Died'+(p.death.place?' in '+p.death.place:'')}));
+  events.sort((a,b)=>a.d.localeCompare(b.d));
+
+  genWebHTML=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>:root{--bg:${t.bg};--txt:${t.txt};--acc:${t.acc};--card:${t.card};--nav:${t.nav}}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+nav{background:var(--nav);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}nav h1{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--acc)}nav .lk{display:flex;gap:20px}nav a{color:var(--txt);text-decoration:none;font-size:14px;opacity:.7;transition:.2s}nav a:hover{opacity:1;color:var(--acc)}
+.hero{text-align:center;padding:80px 32px 60px;background:linear-gradient(180deg,var(--card),var(--bg))}.hero h1{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:700;margin-bottom:12px}.hero p{font-size:18px;opacity:.7;max-width:600px;margin:0 auto}
+section{max-width:1000px;margin:0 auto;padding:40px 32px}section h2{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;margin-bottom:20px;color:var(--acc)}
+.tli{display:flex;gap:20px;margin-bottom:12px;padding:12px 18px;background:var(--card);border-radius:10px;border-left:3px solid var(--acc)}.tli .td{font-weight:600;min-width:110px;font-size:13px;color:var(--acc)}.tli .tb{flex:1}.tli .tn{font-weight:500}.tli .te{font-size:13px;opacity:.7}
+.bc{background:var(--card);border-radius:12px;padding:24px;margin-bottom:16px}.bc h3{font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:6px}.bc .bd{font-size:13px;opacity:.6;margin-bottom:8px}.bc .bt{font-size:14px;white-space:pre-wrap}
+.tn-box{background:var(--card);border:1px solid var(--acc);border-radius:8px;padding:8px 14px;display:inline-block;margin:4px;font-size:13px;text-align:center}.tn-box .tnm{font-weight:600}.tn-box .tnd{font-size:11px;opacity:.6}
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}.gp{background:var(--card);border-radius:12px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.3}
+footer{text-align:center;padding:32px;font-size:12px;opacity:.5;border-top:1px solid var(--card)}</style></head><body>
+<nav><h1>${esc(title)}</h1><div class="lk">${sec.home?'<a href="#home">Home</a>':''}${sec.tree?'<a href="#tree">Tree</a>':''}${sec.tl?'<a href="#timeline">Timeline</a>':''}${sec.bio?'<a href="#bios">Bios</a>':''}${sec.gal?'<a href="#gallery">Gallery</a>':''}</div></nav>
+${sec.home?`<div class="hero" id="home"><h1>${esc(title)}</h1><p>${esc(sub)}</p></div>`:''}
+${sec.tree?`<section id="tree"><h2>Family Tree</h2><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">${people.slice(0,40).map(p=>`<div class="tn-box"><div class="tnm">${esc(p.name)}</div><div class="tnd">${[p.birth?.date,p.death?.date].filter(Boolean).join(' – ')}</div></div>`).join('')}</div></section>`:''}
+${sec.tl?`<section id="timeline"><h2>Timeline</h2>${events.slice(0,50).map(e=>`<div class="tli"><div class="td">${esc(e.d)}</div><div class="tb"><div class="tn">${esc(e.n)}</div><div class="te">${esc(e.e)}</div></div></div>`).join('')}</section>`:''}
+${sec.bio?`<section id="bios"><h2>Biographies</h2>${bookChapters.length?bookChapters.map(c=>`<div class="bc"><h3>${esc(c.title)}</h3><div class="bd">${c.wc} words</div><div class="bt">${esc(c.text.slice(0,500))}${c.text.length>500?'...':''}</div></div>`).join(''):people.slice(0,20).map(p=>`<div class="bc"><h3>${esc(p.name)}</h3><div class="bd">${[p.birth?.date,p.death?.date].filter(Boolean).join(' — ')}</div><div class="bt">${narratives[p.id]?esc(narratives[p.id].slice(0,400))+'...':'Biography pending.'}</div></div>`).join('')}</section>`:''}
+${sec.gal?`<section id="gallery"><h2>Photo Gallery</h2><p style="margin-bottom:16px;opacity:.6;font-size:14px">Upload family photos to populate this gallery.</p><div class="gg">${Array(6).fill(0).map(()=>'<div class="gp">📷</div>').join('')}</div></section>`:''}
+<footer>${esc(title)} · Built with The Lineage Studio · ${new Date().getFullYear()}</footer></body></html>`;
+
+  const prev=document.getElementById('webPrev');
+  prev.style.display='block';
+  prev.innerHTML=`<iframe srcdoc="${genWebHTML.replace(/"/g,'&quot;')}" style="width:100%;height:600px;border:none"></iframe>`;
+  document.getElementById('dlWebBtn').style.display='inline-flex';
+  toast('Website generated!');
+}
+
+function dlWeb(){if(!genWebHTML){toast('Generate first');return;}dl(genWebHTML,`family_website_${ds()}.html`,'text/html');}
 
 // ═══════════════════════════════════════
 // UTILS
