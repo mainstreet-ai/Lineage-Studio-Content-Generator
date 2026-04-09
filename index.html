@@ -364,7 +364,8 @@ header{background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:10
   <ul class="cd" id="chDeck"><li style="padding:32px;text-align:center;color:var(--text-l);font-size:13px">No chapters yet. Generate narratives in the Book Generator tab.</li></ul>
   <div class="exp-bar">
     <button class="bx pdf" onclick="exPDF()">📕 Export PDF</button>
-    <button class="bx canva" onclick="exCanva()">🎨 Send to Canva</button>
+    <button class="bx canva" onclick="exCanva()">🎨 Copy for Canva</button>
+    <button class="bx canva" onclick="exCanvaMap()" style="background:#5b21b6">🗺️ Canva Template Map</button>
     <button class="bx txt" onclick="exTxt()">📄 Export .txt</button>
     <button class="bx json" onclick="savProj()">💾 Save Project</button>
   </div>
@@ -1086,6 +1087,243 @@ function exCanva(){
   if(intro)t+=`## Introduction\n\n${intro}\n\n---\n\n`;
   bookChapters.forEach((c,i)=>{t+=`## Chapter ${i+1}: ${c.title}\n\n${c.text}\n\n---\n\n`;});
   navigator.clipboard.writeText(t);toast('Canva-ready text copied to clipboard!');
+}
+
+// ═══════════════════════════════════════
+// CANVA TEMPLATE MAPPING EXPORT
+// ═══════════════════════════════════════
+function exCanvaMap(){
+  const biz=localStorage.getItem('ls_biz')||'The Lineage Studio';
+  const intro=document.getElementById('biTx').value;
+  const surnames=[...new Set(people.map(p=>p.sur).filter(Boolean))];
+  const familyName=surnames.length?surnames.join(' & ')+' Family':'Family History';
+  const sorted=[...people].sort((a,b)=>(a.sur||'').localeCompare(b.sur||'')||(a.giv||'').localeCompare(b.giv||''));
+
+  // Date range
+  const births=people.map(p=>p.birth?.date).filter(Boolean).sort();
+  const deaths=people.map(p=>p.death?.date).filter(Boolean).sort();
+  const earliest=births[0]||'';
+  const latest=deaths[deaths.length-1]||new Date().getFullYear().toString();
+  const yearRange=(earliest.match(/\d{4}/)||[''])[0]+'-'+(latest.match(/\d{4}/)||[new Date().getFullYear()])[0];
+
+  // Build directory entries (up to 17 for Stephanie template)
+  const directory=sorted.slice(0,17).map(p=>({
+    name:p.name||'Unknown',
+    birthDate:p.birth?.date||'',
+    deathDate:p.death?.date||'',
+    details:[p.birth?.place,p.facts.find(f=>f.type==='Occupation')?.value].filter(Boolean).join(', ')||''
+  }));
+
+  // Build tree grid names (up to 56 first names for Stephanie template)
+  const treeNames=sorted.slice(0,56).map(p=>p.giv||p.name?.split(' ')[0]||'');
+
+  // Build timeline events
+  const events=[];
+  sorted.forEach(p=>{
+    if(p.birth?.date) events.push({date:p.birth.date,title:`${p.name} born`,desc:p.birth.place?`Born in ${p.birth.place}`:''});
+    if(p.death?.date) events.push({date:p.death.date,title:`${p.name} died`,desc:p.death.place?`Died in ${p.death.place}`:''});
+    p.facts.forEach(f=>{
+      if(f.date&&f.type) events.push({date:f.date,title:`${p.name} - ${f.type}`,desc:[f.value,f.place].filter(Boolean).join(', ')});
+    });
+  });
+  events.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+
+  // Build biography pages
+  const bios=bookChapters.map(ch=>{
+    const p=people.find(x=>x.id===ch.pid);
+    return {
+      name:ch.title,
+      born:p?.birth?.date?`Born: ${p.birth.date}`:'',
+      died:p?.death?.date?`Died: ${p.death.date}`:'',
+      narrative:ch.text,
+      wordCount:ch.wc
+    };
+  });
+
+  // Chapter narratives (non-bio chapters from AI)
+  const chapterNarratives=bookChapters.map((ch,i)=>({
+    chapterNumber:i+1,
+    title:ch.title,
+    text:ch.text,
+    wordCount:ch.wc
+  }));
+
+  // ─── STEPHANIE 22-PAGE TEMPLATE MAP ───
+  const stephanieMap={
+    templateName:'Family Ancestry Book Template by Stephanie',
+    designId:'DAG_EaDJJ7E',
+    pages:22,
+    instructions:'Paste this JSON in a Claude conversation and say: "Fill the Stephanie template (DAG_EaDJJ7E) with this data." Claude will use the Canva editing API to auto-fill every text field.',
+    mapping:{
+      page1_cover:{
+        familyName:{elementId:'PBm8gKB0pJmmVTjv-LBX6ywBq0cTx5DSt',value:`The ${familyName}`},
+        dateRange:{elementId:'PBm8gKB0pJmmVTjv-LBBqz9nfh16SQ07C',value:yearRange}
+      },
+      page3_directory:directory.slice(0,7).map((d,i)=>{
+        const ids=[
+          'PBdDjKgVtbtFNsQb-LB2f3BbHwXcSNT0L-LB8jSbvFTMfVZNWK',
+          'PBdDjKgVtbtFNsQb-LBlgNSP2nTrS5CHs-LBXVyjpPpSPq8PsH',
+          'PBdDjKgVtbtFNsQb-LBnJjcRMz0NZVTy8-LB2BVdPcMkdhynt2',
+          'PBdDjKgVtbtFNsQb-LBVBXm74XfZVCtmz-LBm4VcZDLwXZb055',
+          'PBdDjKgVtbtFNsQb-LBBCkRFbdZxtYNc2-LBdBQdbhMQDVK0xn',
+          'PBdDjKgVtbtFNsQb-LBrXxhd51Mc5v5st-LBHGHZ0C7BtL9Gn2',
+          'PBdDjKgVtbtFNsQb-LBxjXwhD6ZPYGP1x-LBZ8JJyJcpXQ5WPZ'
+        ];
+        return {elementId:ids[i],value:`${d.name}\n${d.birthDate}\n${d.deathDate}\n${d.details}`};
+      }),
+      page5_ourJourney:{
+        title:{elementId:'PB0wWqTCFq0Cj4xp-LBJ6vBhdNfmgvrTr',value:chapterNarratives[0]?.title||'Our Journey'},
+        narrative:{elementId:'PB0wWqTCFq0Cj4xp-LBj4gnpJC2JVvF4d',value:chapterNarratives[0]?.text?.slice(0,500)||''}
+      },
+      page6_whereWeBegan:{
+        title:{elementId:'PBFWf4JCDhfLhrn1-LBfhJQW094BpkYL4',value:chapterNarratives[1]?.title||'Where We Began'},
+        leftColumn:{elementId:'PBFWf4JCDhfLhrn1-LBc1GRQL3JKqtPM8',value:chapterNarratives[1]?.text?.slice(0,800)||''},
+        rightColumn:{elementId:'PBFWf4JCDhfLhrn1-LBksJqF763W8CnhM',value:chapterNarratives[1]?.text?.slice(800,1600)||''}
+      },
+      page9_biography1:{
+        bio:{elementId:'PBVXJGW9r5h67VQk-LBsFnnc6f4c2bHKj',value:bios[0]?`${bios[0].name}\n${bios[0].born}\n${bios[0].died}\n\n${bios[0].narrative.slice(0,1200)}`:''},
+        milestoneTable:events.slice(0,7).map((e,i)=>({
+          dateId:`PBVXJGW9r5h67VQk-LBk244SWnvCXtSgX-A${i+2}`,
+          eventId:`PBVXJGW9r5h67VQk-LBk244SWnvCXtSgX-B${i+2}`,
+          date:e.date,
+          event:e.title
+        }))
+      },
+      page10_timeline:events.slice(0,10).map((e,i)=>{
+        const ids=[
+          'PBx4qLbgm0Bqj75v-LBTvj72Mm4cThm95',
+          'PBx4qLbgm0Bqj75v-LBwg9x1C6W8K3SPY-LBCL86GYKX23wK5S',
+          'PBx4qLbgm0Bqj75v-LB7XcNFtcwhNTY3l-LBVBFvFr1PJ34h9R',
+          'PBx4qLbgm0Bqj75v-LB17pvWB3mYcmnm7',
+          'PBx4qLbgm0Bqj75v-LB3gKj38VdHfNQ2N',
+          'PBx4qLbgm0Bqj75v-LBZV0xbxbPG6sZV9',
+          'PBx4qLbgm0Bqj75v-LB8V7vxzMKZ4BYX4',
+          'PBx4qLbgm0Bqj75v-LBFLcc9bnvXPFhK5',
+          'PBx4qLbgm0Bqj75v-LB3dZw7F2WzJZzGb',
+          'PBx4qLbgm0Bqj75v-LB9hL34m8bwFvmjS'
+        ];
+        return {elementId:ids[i],value:`${e.date}\n${e.desc||e.title}`};
+      }),
+      page11_biography2:{
+        left:{elementId:'PBshGXN2RQ8Ct1k2-LBTZRpmv4g8tl8qh',value:bios[1]?`${bios[1].name}\n${bios[1].born}\n${bios[1].died}\n\n${bios[1].narrative.slice(0,800)}`:''},
+        right:{elementId:'PBshGXN2RQ8Ct1k2-LBH9vNFJcrGs4JXB',value:bios[2]?`${bios[2].name}\n${bios[2].born}\n${bios[2].died}\n\n${bios[2].narrative.slice(0,800)}`:''}
+      },
+      page12_migration:{
+        title:{elementId:'PBN3ndhzcl1r8tXw-LBBCmjLjGzZsmdmL',value:chapterNarratives[2]?.title||'The Journey'},
+        leftColumn:{elementId:'PBN3ndhzcl1r8tXw-LB1jfl2cvfvNyDwj',value:chapterNarratives[2]?.text?.slice(0,600)||''},
+        rightColumn:{elementId:'PBN3ndhzcl1r8tXw-LB0SXX41WSQ833kd',value:chapterNarratives[2]?.text?.slice(600,1800)||''}
+      },
+      page13_notableEvents:events.filter(e=>e.desc).slice(0,4).map((e,i)=>{
+        const ids=[
+          'PBLdGTYDJG46kB27-LB1tmfhNRFV1KHYG',
+          'PBLdGTYDJG46kB27-LBWjF9Dm48cWdb6f',
+          'PBLdGTYDJG46kB27-LBHdZMJrLbzB19w6',
+          'PBLdGTYDJG46kB27-LB9c7RCkMPh4jFRN'
+        ];
+        return {elementId:ids[i],value:`${e.title}\n${e.desc}`};
+      }),
+      page21_specialThanks:{
+        elementId:'PBLxqvbq2myq9nD5-LBjrS9xT6R1QxJTC-LB2fjHyhTQN6cC6Y',
+        value:`This family history was researched and compiled by ${biz}. Special thanks to the family members who shared their stories, photographs, and memories. ${intro?'\n\n'+intro.slice(0,300):''}`
+      }
+    }
+  };
+
+  // ─── CABOV 50-PAGE TEMPLATE MAP ───
+  const cabovMap={
+    templateName:'From Cabov to Coal Country (50-page)',
+    designId:'DAG3GuEGGf4',
+    pages:50,
+    instructions:'This is the Cabov-style 50-page template. It follows this structure: Cover → Family Tree → Table of Contents → Cultural Context Chapter → Ancestor Biographies (with details boxes) → Historical Context Chapters → Timeline → Acknowledgments. Paste this JSON in a Claude conversation to auto-fill.',
+    structure:{
+      cover:{familyName,yearRange,surnames:surnames.join(', ')},
+      tableOfContents:chapterNarratives.map((c,i)=>({chapter:i+1,title:c.title,page:8+(i*3)})),
+      biographies:bios.map(b=>({
+        name:b.name,
+        born:b.born,
+        died:b.died,
+        details:`Full Name: ${b.name}\n${b.born}\n${b.died}`,
+        narrative:b.narrative
+      })),
+      culturalContext:intro||'',
+      timelineEvents:events.slice(0,30),
+      acknowledgments:`Created by ${biz}\nlineagestudio.org`
+    }
+  };
+
+  // ─── FAMILY TREE TEMPLATE MAP ───
+  const treeMap={
+    templateName:'Árbol genealógico minimalista blanco y negro',
+    designId:'DAHEHwQgBNI',
+    instructions:'This maps GEDCOM family data to the minimalist family tree template. Paste in Claude to auto-fill.',
+    familyTitle:`${familyName}`,
+    people:sorted.slice(0,30).map(p=>({
+      name:p.name,
+      dates:[p.birth?.date,p.death?.date].filter(Boolean).join(' - '),
+      place:p.birth?.place||'',
+      sex:p.sex
+    }))
+  };
+
+  // ─── COMBINED OUTPUT ───
+  const output={
+    _version:2,
+    _generated:new Date().toISOString(),
+    _generator:'Lineage Studio AI Engine',
+    _business:biz,
+    _project:projects[activeProj]?.name||'Untitled',
+    _instructions:'HOW TO USE: Copy this entire JSON. Open a new Claude conversation. Paste it and say: "Fill the [template name] Canva template with this data." Claude will use Canva editing tools to auto-populate every text field in the template.',
+    summary:{
+      totalPeople:people.length,
+      totalChapters:bookChapters.length,
+      totalEvents:events.length,
+      familyName,
+      yearRange,
+      surnames
+    },
+    rawData:{
+      allPeople:sorted.map(p=>({
+        name:p.name,sex:p.sex,
+        birth:p.birth,death:p.death,burial:p.buri,
+        facts:p.facts,
+        sourcesCount:p.sources?.length||0,
+        notesCount:p.notes?.length||0,
+        mediaCount:p.media?.length||0
+      })),
+      allEvents:events,
+      bookIntro:intro,
+      chapters:chapterNarratives
+    },
+    canvaTemplates:{
+      stephanie22Page:stephanieMap,
+      cabov50Page:cabovMap,
+      familyTree:treeMap
+    }
+  };
+
+  dl(JSON.stringify(output,null,2),`Canva_Template_Map_${familyName.replace(/\s+/g,'_')}_${ds()}.json`,'application/json');
+
+  // Also copy a summary to clipboard
+  const clipSummary=`📋 CANVA TEMPLATE MAPPING EXPORTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Project: ${projects[activeProj]?.name||'Untitled'}
+Family: ${familyName} (${yearRange})
+People: ${people.length} | Chapters: ${bookChapters.length} | Events: ${events.length}
+
+Templates mapped:
+  1. Stephanie 22-Page (DAG_EaDJJ7E) — ${directory.length} directory entries, ${bios.length} bios
+  2. Cabov 50-Page (DAG3GuEGGf4) — full structure mapped
+  3. Family Tree (DAHEHwQgBNI) — ${Math.min(sorted.length,30)} people
+
+HOW TO USE:
+Open a new Claude conversation, upload the JSON file, and say:
+"Fill the Stephanie template with this data"
+or
+"Fill the Cabov template with this data"
+Claude will use Canva's editing API to auto-populate every text field.`;
+
+  navigator.clipboard.writeText(clipSummary);
+  toast('Template map downloaded + summary copied to clipboard!');
 }
 
 // ═══════════════════════════════════════
