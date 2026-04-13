@@ -239,6 +239,7 @@ header{background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:10
   <nav class="nav">
     <button class="nav-t on" onclick="tab('projects')">📂 Projects</button>
     <button class="nav-t" onclick="tab('gen')">✍️ Book Generator</button>
+    <button class="nav-t" onclick="tab('photos')">📸 Photos</button>
     <button class="nav-t" onclick="tab('tree')">🌳 Family Tree</button>
     <button class="nav-t" onclick="tab('asm')">📚 Assembly</button>
     <button class="nav-t" onclick="tab('web')">🌐 Website</button>
@@ -372,6 +373,50 @@ header{background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:10
 </div>
 </div>
 
+<!-- ═══ PHOTO MANAGER TAB ═══ -->
+<div id="p-photos" class="panel">
+<div style="display:flex;height:calc(100vh - 56px);overflow:hidden">
+  <!-- Photo Sidebar -->
+  <div style="width:300px;min-width:300px;background:var(--white);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:14px 14px 10px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:start">
+      <div><div style="font-family:var(--fd);font-size:15px;font-weight:700;color:var(--ink)">📸 Photo Manager</div><div style="font-size:10px;color:var(--text-l);font-style:italic" id="pm_projName">No project</div></div>
+      <button onclick="pm_showProjModal()" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--ink);opacity:.6" title="Projects">📁</button>
+    </div>
+    <div style="padding:8px 12px;border-bottom:1px solid var(--bdr);display:flex;gap:4px;flex-wrap:wrap" id="pm_projBar"></div>
+    <div style="margin:10px;padding:18px 10px;border:2px dashed var(--bdr);border-radius:10px;text-align:center;cursor:pointer;background:var(--parch);transition:.2s" id="pm_uploadZone" onclick="document.getElementById('pm_fileIn').click()">
+      <div style="font-size:22px;margin-bottom:2px">📷</div>
+      <div style="font-weight:600;color:var(--ink);font-size:12px">Add Photos</div>
+      <div style="font-size:10px;color:var(--text-l)">Drag & drop or click</div>
+      <input type="file" id="pm_fileIn" accept="image/*" multiple hidden>
+    </div>
+    <div style="padding:2px 14px 6px;font-size:10px;color:var(--text-l);display:flex;justify-content:space-between"><span id="pm_count">0 photos</span><span id="pm_idCount">0 identified</span></div>
+    <div style="padding:0 10px 6px"><select id="pm_filterCh" style="width:100%;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--fb);font-size:10px" onchange="pm_renderAll()"><option value="all">All Sections</option></select></div>
+    <div id="pm_photoList" style="flex:1;overflow-y:auto"></div>
+    <div id="pm_exportBar" style="padding:6px 10px;border-top:1px solid var(--bdr);display:none;gap:6px">
+      <button class="bg s" style="flex:1;font-size:10px;padding:6px" onclick="pm_exportInventory()">Export Inventory</button>
+      <button class="bg p" style="flex:1;font-size:10px;padding:6px" onclick="pm_exportJSON()">Save Project</button>
+    </div>
+  </div>
+  <!-- Photo Main -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:16px 24px 10px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+      <div><div id="pm_mainTitle" style="font-family:var(--fd);font-size:22px;color:var(--ink);font-weight:600">Photo Manager</div><div id="pm_mainSub" style="font-size:11px;color:var(--text-l);font-style:italic;margin-top:1px">Select a photo to edit</div></div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <button class="bs" onclick="pm_showUrlModal()">+ Add URL</button>
+        <button class="bg s" id="pm_gridBtn" style="font-size:10px;padding:5px 12px" onclick="pm_switchView('grid')">Grid</button>
+        <button class="bs" id="pm_detBtn" onclick="pm_switchView('detail')">Detail</button>
+      </div>
+    </div>
+    <div id="pm_mainBody" style="flex:1;overflow:auto;padding:16px 24px"></div>
+  </div>
+</div>
+</div>
+
+<!-- Photo Manager Modals -->
+<div class="mo-bg" id="pm_projModal"><div class="mo"><h2>Manage Photo Projects</h2><div style="display:flex;gap:6px;margin-bottom:14px"><input class="form-input" id="pm_newProj" placeholder="New project name" style="width:100%;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:13px"><button class="bm p" onclick="pm_createProj()">Create</button></div><div id="pm_projList"></div><div style="margin-top:14px;border-top:1px solid var(--bdr);padding-top:14px"><div style="font-size:11px;font-weight:600;color:var(--text-l);margin-bottom:4px">Load saved project</div><input type="file" id="pm_loadIn" accept=".json" onchange="pm_loadFile(this.files[0])"></div></div></div>
+<div class="mo-bg" id="pm_urlModal"><div class="mo"><h2>Add Photo from URL</h2><p style="font-size:12px;color:var(--text-l);margin-bottom:14px">Paste a direct image URL or Google Drive share link.</p><div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:var(--text-l);display:block;margin-bottom:3px">Image URL</label><input id="pm_urlIn" placeholder="https://drive.google.com/file/d/.../view" style="width:100%;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:13px"></div><div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:var(--text-l);display:block;margin-bottom:3px">Name (optional)</label><input id="pm_urlName" placeholder="e.g., Big Mama and Grandma" style="width:100%;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:13px"></div><div style="display:flex;gap:6px;justify-content:flex-end"><button class="bm" onclick="document.getElementById('pm_urlModal').classList.remove('open')">Cancel</button><button class="bm p" onclick="pm_addFromUrl()">Add Photo</button></div></div></div>
+<div class="mo-bg" id="pm_chModal"><div class="mo"><h2>Manage Sections</h2><div id="pm_chList"></div><div style="display:flex;gap:6px;margin-top:10px"><input id="pm_newCh" placeholder="New section name" style="width:100%;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fb);font-size:13px"><button class="bm p" onclick="pm_addCh()">Add</button></div><div style="margin-top:14px;text-align:right"><button class="bm" onclick="document.getElementById('pm_chModal').classList.remove('open')">Done</button></div></div></div>
+
 <!-- ═══ WEBSITE BUILDER TAB ═══ -->
 <div id="p-web" class="panel">
 <div style="max-width:900px;margin:0 auto;padding:32px">
@@ -438,7 +483,7 @@ function tab(id){
   document.querySelectorAll('.nav-t').forEach(t=>t.classList.remove('on'));
   document.getElementById('p-'+id).classList.add('on');
   document.querySelectorAll('.nav-t').forEach(t=>{
-    const map={projects:'Projects',gen:'Book Gen',tree:'Family Tree',asm:'Assembly',web:'Website'};
+    const map={projects:'Projects',gen:'Book Gen',photos:'Photos',tree:'Family Tree',asm:'Assembly',web:'Website'};
     if(t.textContent.includes(map[id]||'')) t.classList.add('on');
   });
   if(id==='asm') refAsm();
@@ -1387,6 +1432,79 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function ds(){return new Date().toISOString().slice(0,10);}
 function dl(c,n,t){const b=new Blob([c],{type:t});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}
+
+// ═══════════════════════════════════════
+// PHOTO MANAGER
+// ═══════════════════════════════════════
+var pm_projects=JSON.parse(localStorage.getItem('ls_photo_projects')||'[]');
+var pm_activeIdx=parseInt(localStorage.getItem('ls_photo_active')||'-1');
+var pm_selId=null, pm_view='grid';
+
+function pm_proj(){return pm_activeIdx>=0?pm_projects[pm_activeIdx]:null;}
+function pm_photos(){var p=pm_proj();return p?p.photos:[];}
+function pm_chapters(){var p=pm_proj();return p?p.chapters:['Unassigned'];}
+function pm_save(){localStorage.setItem('ls_photo_projects',JSON.stringify(pm_projects));localStorage.setItem('ls_photo_active',pm_activeIdx);}
+
+function pm_showProjModal(){document.getElementById('pm_projModal').classList.add('open');pm_renderProjList();}
+function pm_createProj(){var n=document.getElementById('pm_newProj').value.trim();if(!n)return;pm_projects.push({name:n,chapters:['Unassigned','Cover / Title','Chapter 1','Chapter 2','Chapter 3'],photos:[],created:new Date().toISOString()});pm_activeIdx=pm_projects.length-1;document.getElementById('pm_newProj').value='';pm_save();pm_renderAll();pm_renderProjList();document.getElementById('pm_projModal').classList.remove('open');toast('Photo project: '+n);}
+function pm_switchProj(i){pm_activeIdx=i;pm_selId=null;pm_view='grid';pm_save();pm_renderAll();document.getElementById('pm_projModal').classList.remove('open');}
+function pm_delProj(i){if(!confirm('Delete "'+pm_projects[i].name+'"?'))return;pm_projects.splice(i,1);if(pm_activeIdx>=pm_projects.length)pm_activeIdx=pm_projects.length-1;pm_selId=null;pm_save();pm_renderAll();pm_renderProjList();}
+function pm_renderProjList(){var el=document.getElementById('pm_projList');el.innerHTML=pm_projects.length?pm_projects.map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid ${i===pm_activeIdx?'var(--gold)':'var(--bdr)'};border-radius:8px;margin-bottom:4px;background:${i===pm_activeIdx?'var(--gold-bg)':'var(--white)'};cursor:pointer" onclick="pm_switchProj(${i})"><div><div style="font-weight:600;font-size:12px">${esc(p.name)}</div><div style="font-size:10px;color:var(--text-l)">${p.photos.length} photos</div></div><button onclick="event.stopPropagation();pm_delProj(${i})" style="background:none;border:none;color:var(--rust);font-size:11px;cursor:pointer">✕</button></div>`).join(''):'<div style="color:var(--text-l);font-size:12px;padding:10px">No projects yet.</div>';}
+
+function pm_showUrlModal(){document.getElementById('pm_urlModal').classList.add('open');}
+function pm_addFromUrl(){if(!pm_proj()){pm_showProjModal();return;}var url=document.getElementById('pm_urlIn').value.trim();var name=document.getElementById('pm_urlName').value.trim()||'Photo from URL';if(!url)return;var dUrl=url;var dm=url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);if(dm)dUrl='https://drive.google.com/uc?export=view&id='+dm[1];pm_photos().push({id:Date.now()+Math.random(),name,src:dUrl,width:0,height:0,people:'',date:'',location:'',chapter:'Unassigned',caption:'',notes:'',brightness:100,contrast:100,saturate:100,sourceUrl:url});pm_save();pm_renderAll();document.getElementById('pm_urlModal').classList.remove('open');document.getElementById('pm_urlIn').value='';document.getElementById('pm_urlName').value='';toast('Photo added');}
+
+function pm_showChModal(){document.getElementById('pm_chModal').classList.add('open');pm_renderChList();}
+function pm_addCh(){var n=document.getElementById('pm_newCh').value.trim();if(!n||!pm_proj())return;pm_proj().chapters.push(n);document.getElementById('pm_newCh').value='';pm_save();pm_renderChList();pm_popFilter();}
+function pm_rmCh(i){var p=pm_proj();if(!p||i===0)return;var nm=p.chapters[i];p.photos.forEach(ph=>{if(ph.chapter===nm)ph.chapter='Unassigned';});p.chapters.splice(i,1);pm_save();pm_renderChList();pm_popFilter();pm_renderAll();}
+function pm_renderChList(){var ch=pm_chapters();document.getElementById('pm_chList').innerHTML=ch.map((c,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;margin-bottom:3px"><span style="font-size:12px">${esc(c)}</span>${i>0?`<button onclick="pm_rmCh(${i})" style="background:none;border:none;color:var(--rust);font-size:10px;cursor:pointer">✕</button>`:''}</div>`).join('');}
+function pm_popFilter(){var sel=document.getElementById('pm_filterCh');var cur=sel.value;sel.innerHTML='<option value="all">All Sections</option>';pm_chapters().forEach(c=>{var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});sel.value=cur||'all';}
+
+// Upload
+var pm_uz=document.getElementById('pm_uploadZone'),pm_fi=document.getElementById('pm_fileIn');
+pm_uz.addEventListener('dragover',e=>{e.preventDefault();pm_uz.style.borderColor='var(--gold)';});
+pm_uz.addEventListener('dragleave',()=>{pm_uz.style.borderColor='';});
+pm_uz.addEventListener('drop',e=>{e.preventDefault();pm_uz.style.borderColor='';pm_addPhotos(e.dataTransfer.files);});
+pm_fi.addEventListener('change',e=>{pm_addPhotos(e.target.files);e.target.value='';});
+
+function pm_addPhotos(files){if(!pm_proj()){pm_showProjModal();return;}var ct=0;var tgts=Array.from(files).filter(f=>f.type.startsWith('image/'));tgts.forEach(file=>{var r=new FileReader();r.onload=e=>{var img=new Image();img.onload=()=>{pm_photos().push({id:Date.now()+Math.random(),name:file.name,src:e.target.result,width:img.width,height:img.height,people:'',date:'',location:'',chapter:'Unassigned',caption:'',notes:'',brightness:100,contrast:100,saturate:100,sourceUrl:''});ct++;if(ct===tgts.length){pm_save();pm_renderAll();}};img.src=e.target.result;};r.readAsDataURL(file);});}
+
+function pm_filter(){var f=document.getElementById('pm_filterCh').value;var ph=pm_photos();return f==='all'?ph:ph.filter(p=>p.chapter===f);}
+function pm_pf(p){return`brightness(${p.brightness}%) contrast(${p.contrast}%) saturate(${p.saturate}%)`;}
+
+function pm_renderAll(){pm_renderProjBar();pm_popFilter();pm_renderSidebar();pm_renderMain();}
+function pm_renderProjBar(){var bar=document.getElementById('pm_projBar');bar.innerHTML=pm_projects.map((p,i)=>`<button style="padding:3px 10px;border-radius:16px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid ${i===pm_activeIdx?'var(--gold)':'var(--bdr)'};background:${i===pm_activeIdx?'var(--gold)':'transparent'};color:${i===pm_activeIdx?'white':'var(--text-l)'}" onclick="pm_switchProj(${i})">${esc(p.name)}</button>`).join('')+`<button style="padding:3px 10px;border-radius:16px;font-size:10px;cursor:pointer;border:1px dashed var(--bdr);background:none;color:var(--text-l)" onclick="pm_showProjModal()">+ New</button>`;document.getElementById('pm_projName').textContent=pm_proj()?pm_proj().name:'No project';}
+
+function pm_renderSidebar(){var ph=pm_photos();document.getElementById('pm_count').textContent=ph.length+' photo'+(ph.length!==1?'s':'');document.getElementById('pm_idCount').textContent=ph.filter(p=>p.people).length+' identified';document.getElementById('pm_exportBar').style.display=ph.length?'flex':'none';var list=document.getElementById('pm_photoList');var fil=pm_filter();if(!fil.length){list.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text-l);font-size:11px;font-style:italic">${ph.length?'No photos in this section':'Upload photos to start'}</div>`;return;}list.innerHTML=fil.map(p=>`<div style="display:flex;gap:8px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--bdr-l);border-left:3px solid ${pm_selId===p.id?'var(--gold)':'transparent'};background:${pm_selId===p.id?'var(--gold-bg)':'transparent'};transition:.1s" onclick="pm_selectPhoto(${p.id})"><img src="${p.src}" style="width:42px;height:42px;object-fit:cover;border-radius:5px;filter:${pm_pf(p)}" onerror="this.style.display='none'"><div style="flex:1;min-width:0;overflow:hidden"><div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.people||p.name)}</div><div style="font-size:9px;color:var(--text-l);margin-top:1px">${esc(p.chapter)}</div>${!p.people?'<div style="font-size:8px;color:var(--rust);margin-top:1px">Needs ID</div>':''}</div></div>`).join('');}
+
+function pm_selectPhoto(id){pm_selId=id;pm_view='detail';pm_renderAll();}
+function pm_switchView(v){pm_view=v;if(v==='grid')pm_selId=null;pm_renderAll();}
+function pm_updateField(key,val){var p=pm_photos().find(x=>x.id===pm_selId);if(p){p[key]=val;pm_save();pm_renderSidebar();}}
+function pm_updateSlider(key,val){var p=pm_photos().find(x=>x.id===pm_selId);if(!p)return;p[key]=parseInt(val);pm_save();var lbl=document.getElementById('pm_val_'+key);if(lbl)lbl.textContent=val+'%';var img=document.getElementById('pm_prevImg');if(img)img.style.filter=pm_pf(p);}
+function pm_resetSliders(){var p=pm_photos().find(x=>x.id===pm_selId);if(!p)return;p.brightness=100;p.contrast=100;p.saturate=100;pm_save();pm_renderMain();}
+function pm_rmPhoto(){var proj=pm_proj();if(!proj)return;proj.photos=proj.photos.filter(p=>p.id!==pm_selId);pm_selId=null;pm_view='grid';pm_save();pm_renderAll();toast('Photo removed');}
+function pm_navPhoto(dir){var ph=pm_photos();var idx=ph.findIndex(p=>p.id===pm_selId);var ni=idx+dir;if(ni>=0&&ni<ph.length){pm_selId=ph[ni].id;pm_renderAll();}}
+function pm_dlEnhanced(){var p=pm_photos().find(x=>x.id===pm_selId);if(!p)return;var c=document.createElement('canvas');c.width=p.width||800;c.height=p.height||600;var ctx=c.getContext('2d');var img=new Image();img.crossOrigin='anonymous';img.onload=()=>{ctx.filter=pm_pf(p);ctx.drawImage(img,0,0,c.width,c.height);var a=document.createElement('a');a.download='enhanced_'+p.name;a.href=c.toDataURL('image/png');a.click();toast('Downloaded enhanced');};img.onerror=()=>toast('Cannot process this image locally');img.src=p.src;}
+function pm_dlUpscaled(){var p=pm_photos().find(x=>x.id===pm_selId);if(!p)return;var c=document.createElement('canvas');c.width=(p.width||800)*2;c.height=(p.height||600)*2;var ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';var img=new Image();img.crossOrigin='anonymous';img.onload=()=>{ctx.filter=pm_pf(p);ctx.drawImage(img,0,0,c.width,c.height);var a=document.createElement('a');a.download='upscaled_2x_'+p.name;a.href=c.toDataURL('image/png');a.click();toast('Downloaded 2x upscaled');};img.onerror=()=>toast('Cannot process this image locally');img.src=p.src;}
+
+function pm_renderMain(){var ph=pm_photos();var sel=ph.find(p=>p.id===pm_selId);if(pm_view==='detail'&&sel){document.getElementById('pm_mainTitle').textContent=sel.people||sel.name;document.getElementById('pm_mainSub').textContent=(sel.width?sel.width+'×'+sel.height+' · ':'')+sel.chapter;pm_renderDetail(sel);}else{var proj=pm_proj();document.getElementById('pm_mainTitle').textContent=proj?proj.name:'Photo Manager';document.getElementById('pm_mainSub').textContent=ph.length+' photos · '+ph.filter(p=>p.people).length+' identified';pm_renderGrid();}}
+
+function pm_renderGrid(){var body=document.getElementById('pm_mainBody');var fil=pm_filter();var ph=pm_photos();if(!pm_proj()){body.innerHTML='<div style="text-align:center;padding:50px"><div style="font-size:42px;margin-bottom:10px">📁</div><div style="font-family:var(--fd);font-size:18px;margin-bottom:6px">Create a photo project</div><div style="font-size:12px;color:var(--text-l)">Click + New in the sidebar to get started.</div></div>';return;}if(!ph.length){body.innerHTML='<div style="text-align:center;padding:50px"><div style="font-size:42px;margin-bottom:10px">📷</div><div style="font-family:var(--fd);font-size:18px;margin-bottom:6px">Upload photos</div><div style="font-size:12px;color:var(--text-l);max-width:360px;margin:0 auto">Drag photos into the sidebar, click Add Photos, or use + Add URL.</div><div style="margin-top:16px"><button class="bs" onclick="pm_showChModal()">Edit Sections</button></div></div>';return;}body.innerHTML=`<div style="margin-bottom:10px;text-align:right"><button class="bs" onclick="pm_showChModal()">Edit Sections</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">${fil.map(p=>`<div style="cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid var(--bdr);background:var(--white);transition:.15s" onclick="pm_selectPhoto(${p.id})" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="aspect-ratio:1;overflow:hidden;background:var(--parch)"><img src="${p.src}" style="width:100%;height:100%;object-fit:cover;filter:${pm_pf(p)}" onerror="this.style.display='none'"></div><div style="padding:8px 10px"><div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.people||'Unidentified')}</div><div style="font-size:9px;color:var(--text-l);margin-top:1px">${esc(p.date||p.name)}</div><div style="font-size:8px;font-weight:600;margin-top:3px;color:${p.chapter==='Unassigned'?'var(--rust)':'var(--sage)'}">${p.chapter==='Unassigned'?'No section':esc(p.chapter)}</div></div></div>`).join('')}</div>`;}
+
+function pm_renderDetail(p){var body=document.getElementById('pm_mainBody');var chOpts=pm_chapters().map(c=>`<option value="${esc(c)}"${p.chapter===c?' selected':''}>${esc(c)}</option>`).join('');
+function bS(k,l,v,mn,mx){return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:2px"><span>${l}</span><span id="pm_val_${k}">${v}%</span></div><input type="range" min="${mn}" max="${mx}" value="${v}" oninput="pm_updateSlider('${k}',this.value)" style="width:100%;accent-color:var(--gold)"></div>`;}
+function bF(k,l,v,ph){return`<div style="margin-bottom:12px"><label style="font-size:10px;font-weight:600;color:var(--text-l);display:block;margin-bottom:3px">${l}</label><input style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--fb);font-size:12px" value="${esc(v)}" placeholder="${ph}" onchange="pm_updateField('${k}',this.value)"></div>`;}
+function bT(k,l,v,ph){return`<div style="margin-bottom:12px"><label style="font-size:10px;font-weight:600;color:var(--text-l);display:block;margin-bottom:3px">${l}</label><textarea style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--fb);font-size:12px;resize:vertical" rows="2" placeholder="${ph}" onchange="pm_updateField('${k}',this.value)">${esc(v)}</textarea></div>`;}
+body.innerHTML=`<div style="display:flex;gap:24px;flex-wrap:wrap"><div style="flex:1 1 380px;min-width:280px"><div style="border-radius:10px;overflow:hidden;border:1px solid var(--bdr);background:#1a1a1a;margin-bottom:14px"><img id="pm_prevImg" src="${p.src}" style="width:100%;display:block;filter:${pm_pf(p)}" onerror="this.parentElement.innerHTML='<div style=padding:30px;text-align:center;color:#999>Cannot load</div>'"></div><div style="background:var(--parch);border:1px solid var(--bdr);border-radius:10px;padding:16px"><div style="font-family:var(--fd);font-size:12px;font-weight:700;margin-bottom:10px">ADJUSTMENTS</div>${bS('brightness','Brightness',p.brightness,50,150)}${bS('contrast','Contrast',p.contrast,50,200)}${bS('saturate','Saturation',p.saturate,0,200)}<button onclick="pm_resetSliders()" style="font-size:10px;color:var(--text-l);background:none;border:none;cursor:pointer;text-decoration:underline">Reset</button></div><div style="display:flex;gap:6px;margin-top:10px"><button class="bg p" style="flex:1;font-size:10px" onclick="pm_dlEnhanced()">Download Enhanced</button><button class="bg s" style="flex:1;font-size:10px" onclick="pm_dlUpscaled()">Download 2x Upscale</button></div><div style="background:var(--parch);border:1px solid var(--bdr);border-radius:10px;padding:16px;margin-top:10px"><div style="font-family:var(--fd);font-size:12px;font-weight:700;margin-bottom:10px">RESTORATION TOOLS</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button class="bg p" style="font-size:10px;background:#7b2d8e" onclick="window.open('https://www.myheritage.com/incolor','_blank')">🎨 Colorize</button><button class="bg p" style="font-size:10px;background:#e67e22" onclick="window.open('https://www.myheritage.com/photo-enhancer','_blank')">✨ Enhance</button><button class="bg p" style="font-size:10px;background:#2563eb" onclick="window.open('https://www.iloveimg.com/upscale-image','_blank')">🔍 AI Upscale</button><button class="bg p" style="font-size:10px;background:#e74c3c" onclick="window.open('https://app.remini.ai/','_blank')">🩹 Face Restore</button><button class="bg p" style="font-size:10px;background:#16a085" onclick="window.open('https://hotpot.ai/restore-picture','_blank')">🔧 Fix Damage</button></div><div style="font-size:9px;color:var(--text-l);font-style:italic;margin-top:8px;line-height:1.5">Download first, then upload to any tool above.</div></div></div><div style="flex:1 1 300px;min-width:260px"><div style="background:var(--parch);border:1px solid var(--bdr);border-radius:10px;padding:16px"><div style="font-family:var(--fd);font-size:12px;font-weight:700;margin-bottom:10px">PHOTO DETAILS</div>${bF('people',"Who's in this photo?",p.people,'e.g., Big Mama and Grandmother')}${bF('date','Date / Era',p.date,'e.g., 1960s, July 2017')}${bF('location','Location',p.location,'e.g., 720 N. Long Ave, Chicago')}<div style="margin-bottom:12px"><label style="font-size:10px;font-weight:600;color:var(--text-l);display:block;margin-bottom:3px">Section</label><select style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:6px;font-family:var(--fb);font-size:12px" onchange="pm_updateField('chapter',this.value)">${chOpts}</select></div>${bT('caption','Caption for book',p.caption,'Caption under the photo')}${bT('notes','Internal notes',p.notes,'Research notes, questions')}<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bdr)"><div style="font-size:9px;color:var(--text-l)">${esc(p.name)}${p.width?' · '+p.width+'×'+p.height:''}</div><button onclick="pm_rmPhoto()" style="font-size:10px;color:var(--rust);background:none;border:none;cursor:pointer;font-weight:600">Remove</button></div></div><div style="display:flex;gap:6px;margin-top:10px"><button class="bs" style="flex:1" onclick="pm_navPhoto(-1)">← Previous</button><button class="bs" style="flex:1" onclick="pm_navPhoto(1)">Next →</button></div></div></div>`;}
+
+function pm_exportJSON(){var proj=pm_proj();if(!proj)return;dl(JSON.stringify(proj,null,2),proj.name.replace(/[^a-zA-Z0-9]/g,'_')+'_photos.json','application/json');toast('Saved');}
+function pm_loadFile(file){if(!file)return;var r=new FileReader();r.onload=e=>{try{var proj=JSON.parse(e.target.result);if(!proj.name||!proj.photos)throw new Error('Invalid');pm_projects.push(proj);pm_activeIdx=pm_projects.length-1;pm_save();pm_renderAll();document.getElementById('pm_projModal').classList.remove('open');toast('Loaded: '+proj.name);}catch(err){alert('Could not load: '+err.message);}};r.readAsText(file);}
+function pm_exportInventory(){var proj=pm_proj();if(!proj)return;var t='THE LINEAGE STUDIO - PHOTO INVENTORY\n'+proj.name+'\n'+'='.repeat(50)+'\nExported: '+new Date().toLocaleDateString()+'\n\n';var grouped={};proj.photos.forEach(p=>{if(!grouped[p.chapter])grouped[p.chapter]=[];grouped[p.chapter].push(p);});Object.keys(grouped).forEach(ch=>{t+=ch.toUpperCase()+'\n'+'-'.repeat(40)+'\n';grouped[ch].forEach(p=>{t+='\nFile: '+p.name+'\nPeople: '+(p.people||'Not identified')+'\nDate: '+(p.date||'Unknown')+'\nLocation: '+(p.location||'Unknown')+'\nCaption: '+(p.caption||'None');if(p.notes)t+='\nNotes: '+p.notes;if(p.width)t+='\nDimensions: '+p.width+' x '+p.height;t+='\n';});t+='\n';});dl(t,proj.name.replace(/[^a-zA-Z0-9]/g,'_')+'_Inventory.txt','text/plain');toast('Inventory exported');}
+
+// Close photo modals on overlay click
+['pm_projModal','pm_urlModal','pm_chModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('open');});});
+
+pm_renderAll();
 
 // INIT
 updBadge();
